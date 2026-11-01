@@ -1,6 +1,8 @@
 import pyautogui
 import tkinter as tk
+import easyocr
 
+reader = easyocr.Reader(['en'], gpu=False)
 
 root = tk.Tk()
 root.geometry("300x200")
@@ -37,3 +39,5 @@ def on_k(event):
 root.bind("<k>", on_k)
 root.mainloop()
 
+result = reader.readtext(path, detail=0, paragraph=True)
+print(result)
