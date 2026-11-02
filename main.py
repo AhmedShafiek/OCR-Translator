@@ -13,7 +13,11 @@ from deep_translator import (GoogleTranslator,
                              batch_detection)
 import os
 
+global txt_path
 txt_path = "d:/ssd/vscode/new stuff/OCRtranslator/text.txt"
+
+global png_path
+png_path = "d:/ssd/vscode/new stuff/OCRtranslator/ss.png"
 
 #initializing the OCR object and putting which languages to detect
 reader = easyocr.Reader(['en', 'fr', 'es', 'de', 'it', 'pt', 'nl', 'da', 'sv', 'pl', 'ro', 'tr'], gpu=True)
@@ -63,55 +67,61 @@ def screenshot(x,y,w,h, path):
 
 def on_k(event):
     #defining the function that works if the user presses "k"
-    global png_path
-    png_path = "d:/ssd/vscode/new stuff/OCRtranslator/ss.png"
+    
 
     x,y,w,h = get_coordinates()
     root.withdraw()
-    root.after(150,screenshot(x,y,w,h,png_path))
-    root.after(150,root.destroy())
-    
+    root.after(150,screenshot,x,y,w,h,png_path)
+    root.after(150,root.deiconify)
+    root.after(150,process)
+
+def on_esc(event):
+    root.after(150, root.destroy)
+
+def process():
+    #ocr module implementation
+    result = reader.readtext(png_path, detail=0, paragraph=True)
+    with open(txt_path, "w") as f:
+        f.write(str(result))
+
+    #storing the text the OCR output into a variable
+    with open(txt_path, "r" ) as f:
+        text = f.read()
+
+    #using the langdetect module to detect languages
+    lang = detect(text)
+    srclang = MYMEMORY_CODES.get(lang, lang)
+
+    #passing the text to the translator module
+    translated = MyMemoryTranslator(source=srclang, target="en-US").translate(text)
+    with open(txt_path, "w") as f:
+        f.write(str(translated))
+
+    #deleting the photo
+    try:
+        os.remove(png_path)
+        print("Removed the png file")
+
+    except FileNotFoundError:
+        print("File not found.")
+
+    #storing the translated text in the file to a variable and printing it
+    with open(txt_path, "r" ) as f:
+        text = f.read()
+    print("=====Translated text ======")
+    print(text)
+    print("===========================")
+
+    #deleting the text file
+    try:
+        os.remove(txt_path)
+        print("Text file removed successfully")
+
+    except FileNotFoundError:
+        print("File not found")
+        
 
 root.bind("<k>", on_k)
+root.bind("<Escape>", on_esc)
 root.mainloop()
 
-#ocr module implementation
-result = reader.readtext(png_path, detail=0, paragraph=True)
-with open(txt_path, "w") as f:
-    f.write(str(result))
-
-#storing the text the OCR output into a variable
-with open(txt_path, "r" ) as f:
-    text = f.read()
-
-#using the langdetect module to detect languages
-lang = detect(text)
-srclang = MYMEMORY_CODES.get(lang, lang)
-
-#passing the text to the translator module
-translated = MyMemoryTranslator(source=srclang, target="en-US").translate(text)
-with open(txt_path, "w") as f:
-    f.write(str(translated))
-
-#deleting the photo
-try:
-    os.remove(png_path)
-    print("Removed the png file")
-
-except "FileNotFound":
-    print("File not found.")
-
-#storing the translated text in the file to a variable and printing it
-with open(txt_path, "r" ) as f:
-    text = f.read()
-print("=====Translated text ======")
-print(text)
-print("===========================")
-
-#deleting the text file
-try:
-    os.remove(txt_path)
-    print("Text file removed successfully")
-
-except "FileNotFound":
-    print("File not found")
